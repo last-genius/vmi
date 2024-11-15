@@ -14,67 +14,79 @@ permissions:
   contents: read
 
 jobs:
-  #xen-install:
-  #  name: Install Xen
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - name: Cache Xen
-  #      id: cache-xen
-  #      uses: actions/cache@v4
-  #      with:
-  #        path: ~/xen/dist
-  #        key: ${{ runner.os }}-xen-RELEASE-4.19.0
-  #
-  #    - name: Install build dependencies
-  #      if: steps.cache-xen.outputs.cache-hit != 'true'
-  #      run: |
-  #        #
-  #        # Install build dependencies.
-  #        #
-  #
-  #        sudo apt-get install -y \
-  #          build-essential \
-  #          git-core \
-  #          golang \
-  #          iasl \
-  #          libbz2-dev \
-  #          libext2fs-dev \
-  #          liblzma-dev \
-  #          libncurses5-dev \
-  #          libyajl-dev \
-  #          libzstd-dev \
-  #          ninja-build \
-  #          ocaml \
-  #          ocaml-findlib \
-  #          python3-dev \
-  #          uuid-dev \
-  #          zlib1g-dev
-  #
-  #        #
-  #        # Clone Xen repository.
-  #        #
-  #
-  #        mkdir -p ~/xen
-  #        cd ~/xen
-  #        git clone https://github.com/xen-project/xen.git -b RELEASE-4.19.0 .
-  #
-  #        #
-  #        # Configure and build Xen.
-  #        #
-  #
-  #        ./configure \
-  #          --disable-docs \
-  #          --disable-pvshim \
-  #          --disable-stubdom \
-  #          --enable-githttp
-  #
-  #        make -j$(nproc) debball
-  #
-  #    - name: Install Xen
-  #      run: |
-  #        sudo dpkg -i ~/xen/dist/*.deb
-  #        sudo apt-get install -f
-  #        sudo ldconfig
+  xen-install:
+    name: Install Xen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Xen
+        id: cache-xen
+        uses: actions/cache@v4
+        with:
+          path: ~/xen/dist
+          key: ${{ runner.os }}-xen-RELEASE-4.19.0
+
+      - name: Install build dependencies
+        if: steps.cache-xen.outputs.cache-hit != 'true'
+        run: |
+          #
+          # Install build dependencies.
+          #
+
+          sudo apt-get install -y \
+            build-essential \
+            git-core \
+            golang \
+            iasl \
+            libbz2-dev \
+            libext2fs-dev \
+            liblzma-dev \
+            libncurses5-dev \
+            libyajl-dev \
+            libzstd-dev \
+            ninja-build \
+            ocaml \
+            ocaml-findlib \
+            python3-dev \
+            uuid-dev \
+            zlib1g-dev
+
+          #
+          # Clone Xen repository.
+          #
+
+          mkdir -p ~/xen
+          cd ~/xen
+          git clone https://github.com/xen-project/xen.git -b RELEASE-4.19.0 .
+
+          #
+          # Configure and build Xen.
+          #
+
+          ./configure \
+            --disable-docs \
+            --disable-pvshim \
+            --disable-stubdom \
+            --enable-githttp
+
+          make -j$(nproc) debball
+
+      - name: Install Xen
+        run: |
+          sudo dpkg -i ~/xen/dist/*.deb
+          sudo apt-get install -f
+          sudo ldconfig
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run check
+        run: cargo build --examples
 
   clippy:
     name: cargo clippy
